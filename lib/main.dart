@@ -1,5 +1,8 @@
 import 'dart:typed_data';
-
+import 'package:apptest/Identification.dart';
+import 'package:background_mode/background_mode.dart';
+import 'package:flutter_tagging/flutter_tagging.dart';
+import 'package:flutter_background/flutter_background.dart';
 import 'package:apptest/Splash.dart';
 import 'package:apptest/answer.dart';
 import 'package:apptest/detail.dart';
@@ -9,10 +12,12 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'question.dart';
 import 'answer.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MaterialApp(home: Splash()));
+
+  runApp(MaterialApp(home: Identification()));
 }
 
 class MyApp extends StatefulWidget {
@@ -40,9 +45,31 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  loading() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+              scrollable: true,
+              content:
+                  Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
+                SpinKitFadingCircle(
+                  itemBuilder: (BuildContext context, int index) {
+                    return DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: index.isEven ? Colors.blue : Colors.blue,
+                      ),
+                    );
+                  },
+                )
+              ]));
+        });
+  }
+
   @override
   void initState() {
     super.initState();
+
     widget.flutterBlue.connectedDevices
         .asStream()
         .listen((List<BluetoothDevice> devices) {
@@ -85,6 +112,7 @@ class _MyAppState extends State<MyApp> {
                     style: TextStyle(color: Colors.white),
                   ),
                   onPressed: () async {
+                    loading();
                     widget.flutterBlue.stopScan();
                     try {
                       await device.connect();
