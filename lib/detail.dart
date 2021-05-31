@@ -3,6 +3,7 @@ import 'package:apptest/DurCard.dart';
 import 'package:apptest/PressCard.dart';
 import 'package:apptest/Identification.dart';
 import 'package:apptest/TempCard.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'dart:typed_data';
 import 'package:flutter_chips_input/flutter_chips_input.dart';
@@ -25,14 +26,14 @@ class Detail extends StatefulWidget {
   _DetailState createState() => _DetailState(services, ref);
 }
 
-class _DetailState extends State<Detail> {
+class _DetailState extends State<Detail> with WidgetsBindingObserver {
   final databaseref = FirebaseDatabase.instance;
   final List<BluetoothService> services;
   final ref;
   DateFormat dateFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
 
   var user;
-
+  String _masque = 'FFP2';
   final CHAR = "011c0000-0001-11e1-ac36-0002a5d5c51b";
 //static const String CHAR = "";
   final SERV = "00000000-0001-11e1-9ab4-0002a5d5c51b";
@@ -52,7 +53,7 @@ class _DetailState extends State<Detail> {
     AppProfile('Marche rapide'),
     AppProfile('Escalier'),
     AppProfile('Tousser'),
-    AppProfile('Foerte respiration'),
+    AppProfile('Forte respiration'),
     AppProfile('Port du masque Sous le nez'),
     AppProfile('Port du masque au dessu du menton'),
     AppProfile('Mauvais port'),
@@ -62,69 +63,102 @@ class _DetailState extends State<Detail> {
   ];
   final _chipKey = GlobalKey<ChipsInputState>();
   var etat = [AppProfile('Au repos')];
-  Future<void> logDialog(BuildContext context) async {
-    await showDialog(
+  logDialog(BuildContext context) {
+    showDialog(
         context: context,
         builder: (context) {
-          return AlertDialog(
-              scrollable: true,
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  ChipsInput(
-                    key: _chipKey,
-                    initialValue: etat,
-                    keyboardAppearance: Brightness.dark,
-                    textCapitalization: TextCapitalization.words,
-                    enabled: true,
-                    maxChips: 5,
-                    textStyle: const TextStyle(
-                        height: 1.5, fontFamily: 'Roboto', fontSize: 16),
-                    decoration: const InputDecoration(
-                      labelText: 'Ajouter tag',
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+                scrollable: true,
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    ChipsInput(
+                      key: _chipKey,
+                      initialValue: etat,
+                      keyboardAppearance: Brightness.dark,
+                      textCapitalization: TextCapitalization.words,
+                      enabled: true,
+                      maxChips: 7,
+                      textStyle: const TextStyle(
+                          height: 1.5, fontFamily: 'Roboto', fontSize: 16),
+                      decoration: const InputDecoration(
+                        labelText: 'Ajouter tag',
+                      ),
+                      findSuggestions: (String query) {
+                        if (query.isNotEmpty) {
+                          var lowercaseQuery = query.toLowerCase();
+                          return mockResults.where((profile) {
+                            return profile.name
+                                .toLowerCase()
+                                .contains(query.toLowerCase());
+                          }).toList(growable: false)
+                            ..sort((a, b) => a.name
+                                .toLowerCase()
+                                .indexOf(lowercaseQuery)
+                                .compareTo(b.name
+                                    .toLowerCase()
+                                    .indexOf(lowercaseQuery)));
+                        }
+                        return mockResults;
+                      },
+                      onChanged: (data) {
+                        etat = data;
+                        print('Chips : $etat');
+                        print('Chips2 : $data');
+                      },
+                      chipBuilder: (context, state, profile) {
+                        return InputChip(
+                          key: ObjectKey(profile),
+                          label: Text(profile.name),
+                          onDeleted: () => state.deleteChip(profile),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        );
+                      },
+                      suggestionBuilder: (context, state, profile) {
+                        return ListTile(
+                          key: ObjectKey(profile),
+                          title: Text(profile.name),
+                          onTap: () {
+                            state.selectSuggestion(profile);
+                          },
+                        );
+                      },
                     ),
-                    findSuggestions: (String query) {
-                      if (query.isNotEmpty) {
-                        var lowercaseQuery = query.toLowerCase();
-                        return mockResults.where((profile) {
-                          return profile.name
-                              .toLowerCase()
-                              .contains(query.toLowerCase());
-                        }).toList(growable: false)
-                          ..sort((a, b) => a.name
-                              .toLowerCase()
-                              .indexOf(lowercaseQuery)
-                              .compareTo(b.name
-                                  .toLowerCase()
-                                  .indexOf(lowercaseQuery)));
-                      }
-                      return mockResults;
-                    },
-                    onChanged: (data) {
-                      etat = data;
-                      print('Chips : $etat');
-                      print('Chips2 : $data');
-                    },
-                    chipBuilder: (context, state, profile) {
-                      return InputChip(
-                        key: ObjectKey(profile),
-                        label: Text(profile.name),
-                        onDeleted: () => state.deleteChip(profile),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      );
-                    },
-                    suggestionBuilder: (context, state, profile) {
-                      return ListTile(
-                        key: ObjectKey(profile),
-                        title: Text(profile.name),
-                        onTap: () {
-                          state.selectSuggestion(profile);
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ));
+                    DropdownButton<String>(
+                        value: _masque,
+                        //elevation: 5,
+                        style: TextStyle(color: Colors.black),
+                        items: <String>[
+                          'FFP2',
+                          'Masque Churirgical',
+                          'Masque en tissu',
+                        ].map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        hint: Text(
+                          "Choix du masque",
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        onChanged: (String value) {
+                          setState(() {
+                            _masque = value;
+                          });
+                        }),
+                    SizedBox(height: 15),
+                    IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context))
+                  ],
+                ));
+          });
         });
   }
 
@@ -142,7 +176,21 @@ class _DetailState extends State<Detail> {
         }
       }
     }
+    WidgetsBinding.instance.addObserver(this);
     user = appData.text;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused) {
+      print('Background');
+      ShowCaracteristic();
+    }
+    if (state == AppLifecycleState.resumed) {
+      // came back to Foreground
+      print('Foreground');
+    }
   }
 
   @override
@@ -150,7 +198,8 @@ class _DetailState extends State<Detail> {
     final ref1 = databaseref.reference();
     characteristic.setNotifyValue(true);
     print('CharTest : ${characteristic.uuid}');
-
+    //ShowCaracteristic(characteristic);
+    //didChangeAppLifecycleState();
     return Scaffold(
         appBar: AppBar(
           title: Text('Données'),
@@ -203,7 +252,9 @@ class _DetailState extends State<Detail> {
                       });
                       print('SessionId: $sessionId');
                     },
-                    child: startLog ? Text('Arret log') : Text('Logger'),
+                    child: startLog
+                        ? Text('Arret enregistrement')
+                        : Text('Enregistrer'),
                   ),
                   SizedBox(
                     height: 10,
@@ -225,7 +276,7 @@ class _DetailState extends State<Detail> {
     var pression = (bytes2.getInt32(4, Endian.little) / 100);
     var amplitude = (bytes2.getInt16(8, Endian.little) / 100);
     var temperature = (bytes2.getUint16(10, Endian.little) / 10);
-
+/*
     print('Timestamp Bluetile : $timestamp');
     print('Timestamp Smartphone : ${DateTime.now().microsecondsSinceEpoch}');
     print('Durée : $duree');
@@ -234,7 +285,7 @@ class _DetailState extends State<Detail> {
     print('Temperature : $temperature');
     print('Etat : $etat');
     print('User : $user');
-
+*/
     String added = '';
     for (var e in etat) {
       added += (e.name + ',');
@@ -247,12 +298,14 @@ class _DetailState extends State<Detail> {
               dateFormat.format(DateTime.fromMillisecondsSinceEpoch(sessionId)))
           .push()
           .set({
-        'Timestamp Smartphone': DateTime.now().microsecondsSinceEpoch,
+        'Moment': dateFormat.format(DateTime.now()),
+        'Timestamp': timestamp,
         'Durée': duree,
         'Pression': pression,
         'Amplitude': amplitude,
         'Temperature': temperature,
-        'Etat': added
+        'Etat': added,
+        'Type_masque': _masque
       });
     }
 
@@ -273,6 +326,51 @@ class _DetailState extends State<Detail> {
       'Amplitude': data[4],
       'Temperature': data[1],
     }).asStream();
+  }
+
+  ShowCaracteristic() async {
+    characteristic.value.listen((value) {
+      Uint8List bytes = Uint8List.fromList(value);
+      ByteData bytes2 = ByteData.view(bytes.buffer);
+      var timestamp = bytes2.getUint16(0, Endian.little);
+      var duree = (bytes2.getUint16(2, Endian.little) / 1000);
+      var pression = (bytes2.getInt32(4, Endian.little) / 100);
+      var amplitude = (bytes2.getInt16(8, Endian.little) / 100);
+      var temperature = (bytes2.getUint16(10, Endian.little) / 10);
+
+      print('Timestamp Bluetile : $timestamp');
+      print('Timestamp Smartphone : ${DateTime.now().microsecondsSinceEpoch}');
+      print('Durée : $duree');
+      print('Pression : $pression');
+      print('Amplitude : $amplitude');
+      print('Temperature : $temperature');
+      print('Etat : $etat');
+      print('User : $user');
+
+      String added = '';
+      for (var e in etat) {
+        added += (e.name + ',');
+      }
+
+      if (startLog) {
+        print('Log Start');
+        ref
+            .child(user)
+            .child(dateFormat
+                .format(DateTime.fromMillisecondsSinceEpoch(sessionId)))
+            .push()
+            .set({
+          'Moment': dateFormat.format(DateTime.now()),
+          'Timestamp': timestamp,
+          'Durée': duree,
+          'Pression': pression,
+          'Amplitude': amplitude,
+          'Temperature': temperature,
+          'Etat': added,
+          'Type_masque': _masque
+        });
+      }
+    });
   }
 }
 

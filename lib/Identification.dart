@@ -10,11 +10,12 @@ class Identification extends StatefulWidget {
 }
 
 var user1;
+String dropdownValue = 'One';
 
 class _IdentificationState extends State<Identification> {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   Future<String> _user;
-
+  var items = ['Masque en tissu', 'FFP2', 'Masque chirurgical'];
   final myController = TextEditingController();
 
   Future<String> findUser() async {
@@ -92,7 +93,7 @@ class _IdentificationState extends State<Identification> {
                                     },
                                     child: Text('Continuer'),
                                   ),
-                                  SizedBox(height: 20),
+                                  SizedBox(height: 10),
                                   RichText(
                                     text: TextSpan(
                                         style: TextStyle(

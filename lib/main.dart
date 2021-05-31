@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:apptest/Identification.dart';
-import 'package:background_mode/background_mode.dart';
 import 'package:flutter_tagging/flutter_tagging.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:apptest/Splash.dart';
@@ -16,7 +15,6 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(MaterialApp(home: Identification()));
 }
 
