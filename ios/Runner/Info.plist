@@ -51,5 +51,10 @@
 	<string>Need Location permission</string>  
 	<key>NSLocationWhenInUseUsageDescription</key>  
 	<string>Need Location permission</string>
+	<key>NSAppTransportSecurity</key>
+
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+
 </dict>
 </plist>
