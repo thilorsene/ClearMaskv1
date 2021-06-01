@@ -1,15 +1,9 @@
 import 'dart:typed_data';
 import 'package:apptest/Identification.dart';
-import 'package:flutter_tagging/flutter_tagging.dart';
-import 'package:flutter_background/flutter_background.dart';
-import 'package:apptest/Splash.dart';
-import 'package:apptest/answer.dart';
 import 'package:apptest/detail.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
-import 'question.dart';
-import 'answer.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
